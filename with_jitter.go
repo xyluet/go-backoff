@@ -5,44 +5,29 @@ import (
 	"time"
 )
 
-type Randomizer interface {
-	Randomize(min, max time.Duration) time.Duration
-}
+type JitterFunc func() time.Duration
 
-type DefaultRandomizer struct {
-	rand *rand.Rand
-}
-
-func NewDefaultRandomizer() *DefaultRandomizer {
-	r := DefaultRandomizer{
-		rand: rand.New(rand.NewSource(time.Now().UnixNano())),
+func MinMaxJitter(min, max time.Duration) JitterFunc {
+	rand := rand.New(rand.NewSource(time.Now().UnixNano()))
+	return func() time.Duration {
+		return min + time.Duration(rand.Int63n(int64(max-min)+1))
 	}
-	return &r
 }
 
-func (r *DefaultRandomizer) Randomize(min, max time.Duration) time.Duration {
-	return min + time.Millisecond*time.Duration(r.rand.Int63n(max.Milliseconds()-min.Milliseconds()+1))
-}
-
-type WithJitter struct {
+type withJitter struct {
 	Strategy
-	randomizer Randomizer
-	min        time.Duration
-	max        time.Duration
+	jitterFunc JitterFunc
 }
 
-// NewWithJitter returns a new
-func NewWithJitter(s Strategy) *WithJitter {
-	j := WithJitter{
+// WithJitter returns a new
+func WithJitter(s Strategy) Strategy {
+	j := withJitter{
 		Strategy:   s,
-		randomizer: NewDefaultRandomizer(),
-		min:        0,
-		max:        time.Second,
+		jitterFunc: MinMaxJitter(0, time.Second),
 	}
 	return &j
 }
 
-func (j *WithJitter) Backoff(retries int) time.Duration {
-	dur := j.Strategy.Backoff(retries)
-	return dur + j.randomizer.Randomize(j.min, j.max)
+func (j *withJitter) Duration(retries int) time.Duration {
+	return j.Strategy.Duration(retries) + j.jitterFunc()
 }

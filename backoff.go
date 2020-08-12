@@ -6,12 +6,40 @@ import (
 
 // Strategy represents the backoff strategy.
 type Strategy interface {
-	Backoff(retries int) time.Duration
+	Duration(retries int) time.Duration
 }
 
-type zero struct{}
+type zeroStrategy struct{}
 
-// NewZero returns a new zero backoff which always returns 0 duration backoff.
-func NewZero() Strategy { return &zero{} }
+// NewZeroStrategy returns a new zero backoff which always returns 0 duration backoff.
+func NewZeroStrategy() Strategy { return &zeroStrategy{} }
 
-func (z *zero) Backoff(_ int) time.Duration { return 0 }
+func (z *zeroStrategy) Duration(_ int) time.Duration { return 0 }
+
+type constantStrategy struct {
+	duration time.Duration
+}
+
+func NewConstant(duration time.Duration) Strategy {
+	s := constantStrategy{
+		duration: duration,
+	}
+	return &s
+}
+
+func (s *constantStrategy) Duration(_ int) time.Duration { return s.duration }
+
+type linear struct {
+	duration time.Duration
+}
+
+func NewLinear(duration time.Duration) Strategy {
+	s := linear{
+		duration: duration,
+	}
+	return &s
+}
+
+func (s *linear) Duration(retries int) time.Duration {
+	return time.Duration(retries+1) * s.duration
+}

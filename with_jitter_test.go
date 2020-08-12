@@ -10,20 +10,20 @@ import (
 )
 
 func Test_DefaultRandomizer(t *testing.T) {
-	r := backoff.NewDefaultRandomizer()
-	min, max := 5*time.Millisecond, 10*time.Millisecond
-	for i := 0; i < 10; i++ {
-		durationBetween(t, r.Randomize(min, max), min, max)
-	}
+	// r := backoff.NewDefaultRandomizer()
+	// min, max := 5*time.Millisecond, 10*time.Millisecond
+	// for i := 0; i < 10; i++ {
+	// 	durationBetween(t, r.Randomize(min, max), min, max)
+	// }
 }
 
 func Test_WithJitter(t *testing.T) {
 	var strategy backoff.Strategy
-	strategy = backoff.NewZero()
-	strategy = backoff.NewWithJitter(strategy)
-	durationBetween(t, strategy.Backoff(0), 0, time.Second)
+	strategy = backoff.NewZeroStrategy()
+	strategy = backoff.WithJitter(strategy)
 
-	backoff.NewWithJitter(backoff.NewLinear(500 * time.Millisecond))
+	duration := strategy.Duration(0)
+	durationBetween(t, duration, 0, time.Second)
 }
 
 func durationBetween(t *testing.T, duration, min, max time.Duration) {
