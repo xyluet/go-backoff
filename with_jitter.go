@@ -1,16 +1,14 @@
 package backoff
 
 import (
-	"math/rand"
 	"time"
 )
 
 type JitterFunc func() time.Duration
 
 func MinMaxJitter(min, max time.Duration) JitterFunc {
-	rand := rand.New(rand.NewSource(time.Now().UnixNano()))
 	return func() time.Duration {
-		return min + time.Duration(rand.Int63n(int64(max-min)+1))
+		return min + time.Duration(seededRand.Int63n(int64(max-min)+1))
 	}
 }
 

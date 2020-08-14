@@ -1,7 +1,12 @@
 package backoff
 
 import (
+	"math/rand"
 	"time"
+)
+
+var (
+	seededRand = rand.New(rand.NewSource(time.Now().UnixNano()))
 )
 
 // Strategy represents the backoff strategy.
